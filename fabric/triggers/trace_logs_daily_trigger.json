@@ -1,0 +1,32 @@
+{
+  "name": "trace_logs_daily_trigger",
+  "description": "Triggers the trace_logs_bronze_to_silver_pipeline daily at midnight UTC to process the previous 24 hours of trace data.",
+  "properties": {
+    "type": "ScheduleTrigger",
+    "typeProperties": {
+      "recurrence": {
+        "frequency": "Day",
+        "interval": 1,
+        "startTime": "2024-01-02T00:00:00Z",
+        "timeZone": "UTC",
+        "schedule": {
+          "hours": [0],
+          "minutes": [0]
+        }
+      }
+    },
+    "pipelines": [
+      {
+        "pipelineReference": {
+          "referenceName": "trace_logs_bronze_to_silver_pipeline",
+          "type": "PipelineReference"
+        },
+        "parameters": {
+          "windowStart": "",
+          "windowEnd": ""
+        }
+      }
+    ],
+    "annotations": []
+  }
+}

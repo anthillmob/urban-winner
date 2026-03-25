@@ -1,0 +1,103 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/dataFactory/pipeline/1.0.0/schema.json",
+  "properties": {
+    "description": "Executes the trace_logs_bronze_to_silver notebook on a scheduled basis to move trace log data from the Bronze to Silver Lakehouse. By default processes the previous 24 hours; windowStart and windowEnd parameters allow custom date ranges.",
+    "activities": [
+      {
+        "name": "Set_effectiveWindowStart",
+        "description": "Resolves the start of the processing window. Uses the pipeline parameter if supplied; otherwise defaults to 24 hours before the current UTC time.",
+        "type": "SetVariable",
+        "dependsOn": [],
+        "policy": {},
+        "typeProperties": {
+          "variableName": "effectiveWindowStart",
+          "value": {
+            "value": "@if(empty(pipeline().parameters.windowStart), formatDateTime(addHours(utcNow(), -24), 'yyyy-MM-dd HH:mm:ss'), pipeline().parameters.windowStart)",
+            "type": "Expression"
+          }
+        }
+      },
+      {
+        "name": "Set_effectiveWindowEnd",
+        "description": "Resolves the end of the processing window. Uses the pipeline parameter if supplied; otherwise defaults to the current UTC time.",
+        "type": "SetVariable",
+        "dependsOn": [],
+        "policy": {},
+        "typeProperties": {
+          "variableName": "effectiveWindowEnd",
+          "value": {
+            "value": "@if(empty(pipeline().parameters.windowEnd), formatDateTime(utcNow(), 'yyyy-MM-dd HH:mm:ss'), pipeline().parameters.windowEnd)",
+            "type": "Expression"
+          }
+        }
+      },
+      {
+        "name": "Execute_trace_logs_bronze_to_silver",
+        "description": "Runs the trace_logs_bronze_to_silver notebook with the resolved event date window. Retries up to 2 times on transient failures.",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "Set_effectiveWindowStart",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "Set_effectiveWindowEnd",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 2,
+          "retryIntervalInSeconds": 30,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "<NOTEBOOK_OBJECT_ID>",
+          "workspaceId": "<WORKSPACE_ID>",
+          "parameters": {
+            "start_date": {
+              "value": {
+                "value": "@variables('effectiveWindowStart')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "end_date": {
+              "value": {
+                "value": "@variables('effectiveWindowEnd')",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "windowStart": {
+        "type": "string",
+        "defaultValue": "",
+        "description": "Inclusive start of the event_time window to process (ISO-8601 datetime string, e.g. '2024-06-01 00:00:00'). Leave empty to default to 24 hours before run time."
+      },
+      "windowEnd": {
+        "type": "string",
+        "defaultValue": "",
+        "description": "Exclusive end of the event_time window to process (ISO-8601 datetime string, e.g. '2024-06-02 00:00:00'). Leave empty to default to current run time."
+      }
+    },
+    "variables": {
+      "effectiveWindowStart": {
+        "type": "String"
+      },
+      "effectiveWindowEnd": {
+        "type": "String"
+      }
+    },
+    "annotations": []
+  }
+}

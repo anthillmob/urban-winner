@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "trace_logs_bronze_to_silver_pipeline",
+    "description": "Executes the trace_logs_bronze_to_silver notebook on a recurring schedule to move trace log data from the Bronze to Silver Lakehouse."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  }
+}
